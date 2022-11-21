@@ -31,6 +31,11 @@ function logoutFunc() {
     dangerMode: true,
   }).then((e) => {
     if (e) {
+      $.ajax({
+        type: "POST",
+        url: "./php/rediscache.php",
+        encode: true,
+      });
       localStorage.clear();
 
       window.location.assign("./");

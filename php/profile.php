@@ -30,16 +30,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     }
 } elseif ($_SERVER['REQUEST_METHOD'] == 'GET') {
-    if (isset($_GET['email'])) {
-        $email = $_GET['email'];
-        $find_email = (['email' => $email]);
-        $reponse = $profileCollection->findone($find_email);
-        echo json_encode($reponse);
+    include 'rediscache.php';
+    $cache = $redis->get('sessionCache');
+    if ($cache) {
+        echo $cache;
     } else {
-        echo 'login again';
+        if (isset($_GET['email'])) {
+            $email = $_GET['email'];
+            $find_email = (['email' => $email]);
+            $reponse = $profileCollection->findone($find_email);
+            $jsonData = json_encode($reponse);
+            echo $jsonData;
+            $redis->set('sessionCache', $jsonData);
+        } else {
+            echo 'login again';
+        }
     }
 
 } elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
+    include 'rediscache.php';
     parse_str(file_get_contents('php://input'), $_PUT);
     if (isset($_PUT['email'])) {
         $putemail = $_PUT['email'];
@@ -64,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     ],
                 ]
             );
+            $redis->flushall();
             echo 'success';
         } catch (\Throwable $throw) {
             echo 'failed';
